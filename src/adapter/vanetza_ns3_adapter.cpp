@@ -75,9 +75,9 @@ VanetzaNS3Adapter::StartApplication()
     // Initialize Vanetza components
     InitializeVanetza();
     
-    // Set up packet reception callback
+    // Set up packet reception callback using the correct signature
     m_device->SetReceiveCallback(
-        ns3::MakeCallback(&VanetzaNS3Adapter::ReceiveFromNS3, this));
+        ns3::MakeCallback(&VanetzaNS3Adapter::ReceiveFromNS3Raw, this));
     
     // Schedule first CAM transmission
     ScheduleNextCamTransmission();
@@ -110,6 +110,43 @@ VanetzaNS3Adapter::InitializeVanetza()
     m_vanetzaWrapper = std::make_unique<VanetzaWrapper>(m_ns3Interface.get(), m_stationId);
 }
 
+// New method with the correct signature for SetReceiveCallback
+bool
+VanetzaNS3Adapter::ReceiveFromNS3Raw(ns3::Ptr<ns3::NetDevice> device, ns3::Ptr<const ns3::Packet> packet, uint16_t protocol, const ns3::Address& from)
+{
+    NS_LOG_FUNCTION(this << device << packet << protocol << from);
+    
+    // Only process packets for this device
+    if (device != m_device) {
+        return false;
+    }
+    
+    // Check if this is a CAM message (based on protocol)
+    // In a real implementation, you would check for ETSI ITS protocol identifiers
+    if (protocol == 0x8947) { // Example protocol number for ETSI ITS-G5
+        // Copy packet data
+        uint32_t size = packet->GetSize();
+        uint8_t* buffer = new uint8_t[size];
+        packet->CopyData(buffer, size);
+        
+        // Forward to Vanetza for processing
+        if (m_vanetzaWrapper) {
+            m_vanetzaWrapper->receivePacket(buffer, size);
+        }
+        
+        // If there's a registered callback for CAM messages, call it
+        if (m_camReceiverCallback) {
+            m_camReceiverCallback(buffer, size);
+        }
+        
+        delete[] buffer;
+        return true;
+    }
+    
+    return false;
+}
+
+// Keep the original method for backward compatibility
 bool
 VanetzaNS3Adapter::ReceiveFromNS3(ns3::Ptr<ns3::NetDevice> device,
                                   ns3::Ptr<const ns3::Packet> packet,

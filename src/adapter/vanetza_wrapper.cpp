@@ -3,6 +3,7 @@
 
 #include <ns3/log.h>
 #include <ns3/simulator.h>
+#include <vanetza/common/clock.hpp>
 
 // Include necessary Vanetza headers
 // Note: These would be replaced with actual Vanetza headers in the target environment
@@ -86,7 +87,9 @@ VanetzaWrapper::receivePacket(const uint8_t* buffer, std::size_t length)
     
     // In a real implementation, this would pass the packet to the GeoNetworking router
     if (m_router) {
-        m_router->indicate(buffer, length, vanetza::geonet::LinkLayer::Time{});
+        // Create a clock time point for the current time
+        vanetza::Clock::time_point now = vanetza::at_milliseconds(ns3::Simulator::Now().GetMilliSeconds());
+        m_router->indicate(buffer, length, now);
     }
 }
 

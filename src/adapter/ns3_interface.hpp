@@ -7,11 +7,12 @@
 #include <ns3/net-device.h>
 #include <ns3/ptr.h>
 #include <ns3/mac48-address.h>
+#include <vanetza/geonet/link_layer.hpp>
 
-// Forward declarations for Vanetza components
+// Forward declarations for other Vanetza components
 namespace vanetza {
     namespace geonet {
-        class LinkLayer;
+        // LinkLayer is now included directly
     }
 }
 

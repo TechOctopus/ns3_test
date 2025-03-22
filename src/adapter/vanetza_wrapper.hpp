@@ -3,23 +3,30 @@
 
 #include <memory>
 #include <cstdint>
+#include <vanetza/geonet/link_layer.hpp>
+#include <vanetza/geonet/mib.hpp>
+#include <vanetza/geonet/router.hpp>
+#include <vanetza/btp/port_dispatcher.hpp>
+#include <vanetza/dcc/access_control.hpp>
+#include <vanetza/facilities/timer.hpp>
+#include <vanetza/facilities/cam_service.hpp>
 
 // Forward declarations for Vanetza components
 namespace vanetza {
     namespace btp {
-        class PortDispatcher;
+        // PortDispatcher is now included directly
     }
     namespace geonet {
-        class Router;
-        class MIB;
-        class LinkLayer;
+        // Router is now included directly
+        // MIB is now included directly
+        // LinkLayer is now included directly
     }
     namespace dcc {
-        class AccessControl;
+        // AccessControl is now included directly
     }
     namespace facilities {
-        class Timer;
-        class CamService;
+        // Timer is now included directly
+        // CamService is now included directly
     }
 }
 

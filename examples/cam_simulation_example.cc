@@ -10,15 +10,40 @@
 #include "adapter/vanetza_ns3_adapter.hpp"
 #include "adapter/cam_application.hpp"
 
+#include <iostream>
+#include <sstream>
+
 using namespace ns3;
 using namespace vanetza_ns3;
 
 NS_LOG_COMPONENT_DEFINE("CamSimulationExample");
 
+// Trace callbacks
+static void
+TraceMobility (Ptr<const MobilityModel> mobility)
+{
+    std::cout << "Node position: " << mobility->GetPosition() << 
+                " velocity: " << dynamic_cast<const ConstantVelocityMobilityModel*>(PeekPointer(mobility))->GetVelocity() << std::endl;
+}
+
+// Trace callback for received packets
+static void
+TraceCamPacket (std::string context, uint32_t stationId, const Time& time)
+{
+    std::cout << context << " CAM received from station " << stationId << " at time " << time.GetSeconds() << "s" << std::endl;
+}
+
+// Helper function for simulation time logging
+static void
+LogSimTime (double timeValue)
+{
+    std::cout << "Simulation time: " << timeValue << "s" << std::endl;
+}
+
 int main(int argc, char *argv[])
 {
     // Enable logging
-    LogComponentEnable("CamSimulationExample", LOG_LEVEL_INFO);
+    LogComponentEnable("CamSimulationExample", LOG_LEVEL_ALL);
     LogComponentEnable("VanetzaNS3Adapter", LOG_LEVEL_INFO);
     LogComponentEnable("CamApplication", LOG_LEVEL_INFO);
     
@@ -35,7 +60,7 @@ int main(int argc, char *argv[])
     cmd.Parse(argc, argv);
     
     // Create nodes for vehicles
-    NS_LOG_INFO("Creating " << nVehicles << " vehicles");
+    std::cout << "Creating " << nVehicles << " vehicles" << std::endl;
     NodeContainer vehicles;
     vehicles.Create(nVehicles);
     
@@ -60,49 +85,87 @@ int main(int argc, char *argv[])
         // Vary speeds to create realistic scenario
         double speed = 10.0 + (20.0 * i / nVehicles); // 10-30 m/s (36-108 km/h)
         model->SetVelocity(Vector(speed, 0.0, 0.0));
+        
+        // Connect mobility trace
+        Ptr<MobilityModel> mobility = vehicles.Get(i)->GetObject<MobilityModel>();
+        mobility->TraceConnectWithoutContext("CourseChange", MakeCallback(&TraceMobility));
     }
     
-    // Create and configure WAVE devices
-    YansWifiChannelHelper waveChannel = YansWifiChannelHelper::Default();
-    YansWifiPhyHelper wavePhy = YansWifiPhyHelper::Default();
-    wavePhy.SetChannel(waveChannel.Create());
-    wavePhy.SetPcapDataLinkType(WifiPhyHelper::DLT_IEEE802_11);
+    // Create and configure Wi-Fi devices instead of WAVE
+    YansWifiChannelHelper wifiChannel = YansWifiChannelHelper::Default();
+    YansWifiPhyHelper wifiPhy;  
+    wifiPhy.SetChannel(wifiChannel.Create());
     
-    // Set up 802.11p
-    QosWaveMacHelper waveMac = QosWaveMacHelper::Default();
-    WaveHelper waveHelper = WaveHelper::Default();
+    // Enable PCAP tracing on all WiFi devices
+    wifiPhy.SetPcapDataLinkType(WifiPhyHelper::DLT_IEEE802_11);
+    
+    // Use regular Wi-Fi MAC instead of WAVE
+    WifiMacHelper wifiMac;
+    wifiMac.SetType("ns3::AdhocWifiMac");
+    
+    WifiHelper wifi;
+    wifi.SetStandard(WIFI_STANDARD_80211a); // Similar to 802.11p used in WAVE
     
     // Install devices
-    NetDeviceContainer waveDevices = waveHelper.Install(wavePhy, waveMac, vehicles);
+    NetDeviceContainer devices = wifi.Install(wifiPhy, wifiMac, vehicles);
+    
+    // Set MAC addresses explicitly
+    for (uint32_t i = 0; i < devices.GetN(); i++) {
+        Ptr<WifiNetDevice> device = DynamicCast<WifiNetDevice>(devices.Get(i));
+        if (device) {
+            std::stringstream ss;
+            ss << "00:00:00:00:00:" << std::hex << (i + 1);
+            Mac48Address addr = Mac48Address(ss.str().c_str());
+            
+            device->SetAddress(addr);
+            
+            std::cout << "Configured WifiNetDevice " << i << " with MAC address " 
+                << device->GetAddress() << std::endl;
+        }
+    }
     
     // Install Vanetza-NS3 adapter and CAM application on each vehicle
     for (uint32_t i = 0; i < nVehicles; i++) {
         // Create and configure the Vanetza-NS3 adapter
         Ptr<VanetzaNS3Adapter> adapter = CreateObject<VanetzaNS3Adapter>();
-        adapter->SetDevice(waveDevices.Get(i));
+        adapter->SetDevice(devices.Get(i));  // Use Wi-Fi devices
         adapter->SetStationId(i + 1); // Station IDs start from 1
         
         // Create and configure the CAM application
         Ptr<CamApplication> camApp = CreateObject<CamApplication>();
         camApp->SetAdapter(adapter);
         camApp->SetAttribute("StationId", UintegerValue(i + 1));
-        camApp->SetAttribute("CamGenerationInterval", DoubleValue(1.0)); // 1 second interval
+        camApp->SetAttribute("CamGenerationInterval", DoubleValue(0.2)); // 200ms interval for more traffic
+        
+        // Connect trace source for received CAMs
+        std::ostringstream context;
+        context << "Vehicle[" << i << "] ";
+        camApp->TraceConnect("CamReceived", context.str(), MakeCallback(&TraceCamPacket));
         
         // Install applications on the vehicle
         vehicles.Get(i)->AddApplication(adapter);
         vehicles.Get(i)->AddApplication(camApp);
+        
+        std::cout << "Installed Vanetza adapter and CAM application on vehicle " << i << std::endl;
     }
     
-    // Enable packet captures (PCAP)
-    wavePhy.EnablePcap("cam-simulation", waveDevices);
+    // Schedule logging during simulation
+    for (double t = 1.0; t < simTime; t += 1.0) {
+        // Use a helper function
+        Simulator::Schedule(Seconds(t), &LogSimTime, t);
+    }
     
     // Run simulation
-    NS_LOG_INFO("Running simulation for " << simTime << " seconds");
+    std::cout << "Running simulation for " << simTime << " seconds" << std::endl;
+    
+    // Enable PCAP tracing for all devices
+    wifiPhy.EnablePcap("cam-simulation", devices);
+    
     Simulator::Stop(Seconds(simTime));
     Simulator::Run();
     Simulator::Destroy();
     
-    NS_LOG_INFO("Simulation completed successfully");
+    std::cout << "Simulation completed successfully" << std::endl;
     
     return 0;
 }

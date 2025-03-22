@@ -108,6 +108,19 @@ private:
     void InitializeVanetza();
 
     /**
+     * @brief Handle a received packet from NS3 with the raw callback signature
+     * @param device The device that received the packet
+     * @param packet The received packet
+     * @param protocol The protocol number
+     * @param from The source address
+     * @return True if the packet was handled successfully
+     */
+    bool ReceiveFromNS3Raw(ns3::Ptr<ns3::NetDevice> device,
+                        ns3::Ptr<const ns3::Packet> packet,
+                        uint16_t protocol,
+                        const ns3::Address& from);
+
+    /**
      * @brief Handle a received packet from NS3
      * @param device The device that received the packet
      * @param packet The received packet
