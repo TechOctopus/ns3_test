@@ -13,6 +13,11 @@ Before you begin, ensure you have the following installed on your system:
 
 ## Setting Up the Environment
 
+### Install dependencies 
+```bash
+sudo apt install libcrypto++-dev libgeographic-dev
+```
+
 ### Installing NS3
 
 If you don't have NS3 installed, follow these steps:
@@ -21,6 +26,7 @@ If you don't have NS3 installed, follow these steps:
 # Clone NS3 repository
 git clone https://gitlab.com/nsnam/ns-3-dev.git
 cd ns-3-dev
+git checkout ns-3.35
 
 # Configure and build NS3
 ./waf configure --enable-examples --enable-tests
