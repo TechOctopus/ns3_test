@@ -1,13 +1,17 @@
 # Add all subdirectories
 add_subdirectory(adapter)
-add_subdirectory(messages)
-add_subdirectory(utils)
+# Add messages and utils directories if they contain source files
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/messages/CMakeLists.txt)
+    add_subdirectory(messages)
+endif()
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/utils/CMakeLists.txt)
+    add_subdirectory(utils)
+endif()
 
 # Create the main library
 add_library(vanetza_ns3_adapter STATIC
     $<TARGET_OBJECTS:adapter>
-    $<TARGET_OBJECTS:messages>
-    $<TARGET_OBJECTS:utils>
 )
 
 # Link against NS3 and Vanetza libraries
