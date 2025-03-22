@@ -9,7 +9,7 @@
 
 # target_include_directories(utils PUBLIC
 #     ${CMAKE_CURRENT_SOURCE_DIR}
-#     ${NS3_DIR}/build/include
+#     ${NS3_DIR}/include
 #     ${VANETZA_DIR}/build/include
 # )
 

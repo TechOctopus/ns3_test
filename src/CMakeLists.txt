@@ -17,12 +17,12 @@ add_library(vanetza_ns3_adapter STATIC
 # Link against NS3 and Vanetza libraries
 target_link_libraries(vanetza_ns3_adapter
     # NS3 libraries
-    ${NS3_DIR}/build/lib/libns3-dev-core.so
-    ${NS3_DIR}/build/lib/libns3-dev-network.so
-    ${NS3_DIR}/build/lib/libns3-dev-internet.so
-    ${NS3_DIR}/build/lib/libns3-dev-wave.so
-    ${NS3_DIR}/build/lib/libns3-dev-wifi.so
-    ${NS3_DIR}/build/lib/libns3-dev-mobility.so
+    ${NS3_DIR}/lib/libns3-dev-core.so
+    ${NS3_DIR}/lib/libns3-dev-network.so
+    ${NS3_DIR}/lib/libns3-dev-internet.so
+    ${NS3_DIR}/lib/libns3-dev-wave.so
+    ${NS3_DIR}/lib/libns3-dev-wifi.so
+    ${NS3_DIR}/lib/libns3-dev-mobility.so
     
     # Vanetza libraries
     ${VANETZA_DIR}/build/lib/libvanetza_asn1.so

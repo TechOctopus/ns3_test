@@ -9,7 +9,7 @@ add_library(adapter OBJECT
 # Set include directories
 target_include_directories(adapter PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${NS3_DIR}/build/include
+    ${NS3_DIR}/include
     ${VANETZA_DIR}/build/include
 )
 

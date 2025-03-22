@@ -14,7 +14,7 @@ set(VANETZA_DIR "$ENV{HOME}/vanetza" CACHE PATH "Vanetza directory")
 # Include directories
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${NS3_DIR}/build/include
+    ${NS3_DIR}/include
     ${VANETZA_DIR}/build/include
 )
 
